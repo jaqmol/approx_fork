@@ -10,6 +10,7 @@ import (
 
 // NewApproxFork ...
 func NewApproxFork(conf *processorconf.ProcessorConf) *ApproxFork {
+	errMsg := &errormsg.ErrorMsg{Processor: "approx_fork"}
 	distrEnv := conf.Envs["DISTRIBUTE"]
 	var distr Distribute
 	if "copy" == distrEnv {
@@ -17,9 +18,10 @@ func NewApproxFork(conf *processorconf.ProcessorConf) *ApproxFork {
 	} else if "round_robin" == distrEnv {
 		distr = DistributeRoundRobin
 	} else {
-		errormsg.LogFatal("approx_fork", nil, -2004, "Fork expects env DISTRIBUTE to be either copy or round_robin, but got %v", distrEnv)
+		errMsg.LogFatal(nil, "Fork expects env DISTRIBUTE to be either copy or round_robin, but got %v", distrEnv)
 	}
 	return &ApproxFork{
+		errMsg:      errMsg,
 		conf:        conf,
 		outputs:     conf.Outputs,
 		input:       conf.Inputs[0],
@@ -30,6 +32,7 @@ func NewApproxFork(conf *processorconf.ProcessorConf) *ApproxFork {
 
 // ApproxFork ...
 type ApproxFork struct {
+	errMsg      *errormsg.ErrorMsg
 	conf        *processorconf.ProcessorConf
 	outputs     []*bufio.Writer
 	input       *bufio.Reader
@@ -64,9 +67,9 @@ func (a *ApproxFork) Start() {
 	}
 
 	if hardErr == io.EOF {
-		errormsg.LogFatal("approx_fork", nil, -2004, "Unexpected EOL listening for response input")
+		a.errMsg.LogFatal(nil, "Unexpected EOL listening for response input")
 	} else {
-		errormsg.LogFatal("approx_fork", nil, -2005, "Unexpected error listening for response input: %v", hardErr.Error())
+		a.errMsg.LogFatal(nil, "Unexpected error listening for response input: %v", hardErr.Error())
 	}
 }
 
@@ -88,12 +91,12 @@ func (a *ApproxFork) writeToOutput(index int, msgBytes []byte) {
 	output := a.outputs[index]
 	_, err := output.Write(msgBytes)
 	if err != nil {
-		errormsg.Log("approx_fork", nil, -2006, "Error writing response to output: %v", err.Error())
+		a.errMsg.Log(nil, "Error writing response to output: %v", err.Error())
 		return
 	}
 	err = output.Flush()
 	if err != nil {
-		errormsg.Log("approx_fork", nil, -2007, "Error flushing response to output: %v", err.Error())
+		a.errMsg.Log(nil, "Error flushing response to output: %v", err.Error())
 		return
 	}
 }
