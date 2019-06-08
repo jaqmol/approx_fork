@@ -11,7 +11,7 @@ import (
 // NewApproxFork ...
 func NewApproxFork(conf *processorconf.ProcessorConf) *ApproxFork {
 	distrEnv := conf.Envs["DISTRIBUTE"]
-	distr := DistributeCopy
+	var distr Distribute
 	if "copy" == distrEnv {
 		distr = DistributeCopy
 	} else if "round_robin" == distrEnv {
