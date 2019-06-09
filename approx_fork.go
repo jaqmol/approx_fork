@@ -56,7 +56,7 @@ func (a *ApproxFork) Start() {
 		var msgBytes []byte
 		msgBytes, hardErr = a.input.ReadBytes('\n')
 		if hardErr != nil {
-			return
+			break
 		}
 
 		if a.distribute == DistributeCopy {

@@ -1,0 +1,10 @@
+public approx_fork {
+  type process
+  alias fork
+  define in {
+    exactly 1
+  }
+  define outs {
+    minimum 2
+  }
+}
