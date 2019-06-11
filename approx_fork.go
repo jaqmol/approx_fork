@@ -4,13 +4,13 @@ import (
 	"bufio"
 	"io"
 
-	"github.com/jaqmol/approx/errormsg"
+	"github.com/jaqmol/approx/axmsg"
 	"github.com/jaqmol/approx/processorconf"
 )
 
 // NewApproxFork ...
 func NewApproxFork(conf *processorconf.ProcessorConf) *ApproxFork {
-	errMsg := &errormsg.ErrorMsg{Processor: "approx_fork"}
+	errMsg := &axmsg.Errors{Source: "approx_fork"}
 	distrEnv := conf.Envs["DISTRIBUTE"]
 	var distr Distribute
 	if "copy" == distrEnv {
@@ -32,7 +32,7 @@ func NewApproxFork(conf *processorconf.ProcessorConf) *ApproxFork {
 
 // ApproxFork ...
 type ApproxFork struct {
-	errMsg      *errormsg.ErrorMsg
+	errMsg      *axmsg.Errors
 	conf        *processorconf.ProcessorConf
 	outputs     []*bufio.Writer
 	input       *bufio.Reader

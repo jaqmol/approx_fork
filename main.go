@@ -1,13 +1,13 @@
 package main
 
 import (
-	"github.com/jaqmol/approx/errormsg"
+	"github.com/jaqmol/approx/axmsg"
 	"github.com/jaqmol/approx/processorconf"
 )
 
 func main() {
 	conf := processorconf.NewProcessorConf("approx_fork", []string{"DISTRIBUTE"})
-	errMsg := errormsg.ErrorMsg{Processor: "approx_fork"}
+	errMsg := axmsg.Errors{Source: "approx_fork"}
 
 	if len(conf.Outputs) < 2 {
 		errMsg.LogFatal(nil, "Fork expects more than 1 output, but got %v", len(conf.Outputs))
