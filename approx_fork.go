@@ -1,17 +1,16 @@
 package main
 
 import (
-	"bufio"
 	"io"
 
+	"github.com/jaqmol/approx/axenvs"
 	"github.com/jaqmol/approx/axmsg"
-	"github.com/jaqmol/approx/processorconf"
 )
 
 // NewApproxFork ...
-func NewApproxFork(conf *processorconf.ProcessorConf) *ApproxFork {
+func NewApproxFork(envs *axenvs.Envs) *ApproxFork {
 	errMsg := &axmsg.Errors{Source: "approx_fork"}
-	distrEnv := conf.Envs["DISTRIBUTE"]
+	distrEnv := envs.Required["DISTRIBUTE"]
 	var distr Distribute
 	if "copy" == distrEnv {
 		distr = DistributeCopy
@@ -20,11 +19,13 @@ func NewApproxFork(conf *processorconf.ProcessorConf) *ApproxFork {
 	} else {
 		errMsg.LogFatal(nil, "Fork expects env DISTRIBUTE to be either copy or round_robin, but got %v", distrEnv)
 	}
+
+	ins, outs := envs.InsOuts()
+
 	return &ApproxFork{
 		errMsg:      errMsg,
-		conf:        conf,
-		outputs:     conf.Outputs,
-		input:       conf.Inputs[0],
+		outputs:     axmsg.NewWriters(outs),
+		input:       axmsg.NewReader(&ins[0]),
 		distribute:  distr,
 		outputIndex: 0,
 	}
@@ -33,9 +34,8 @@ func NewApproxFork(conf *processorconf.ProcessorConf) *ApproxFork {
 // ApproxFork ...
 type ApproxFork struct {
 	errMsg      *axmsg.Errors
-	conf        *processorconf.ProcessorConf
-	outputs     []*bufio.Writer
-	input       *bufio.Reader
+	outputs     []axmsg.Writer
+	input       *axmsg.Reader
 	distribute  Distribute
 	outputIndex int
 }
@@ -54,7 +54,7 @@ func (a *ApproxFork) Start() {
 	var hardErr error
 	for hardErr == nil {
 		var msgBytes []byte
-		msgBytes, hardErr = a.input.ReadBytes('\n')
+		msgBytes, hardErr = a.input.ReadBytes()
 		if hardErr != nil {
 			break
 		}
@@ -89,14 +89,9 @@ func (a *ApproxFork) distributeRoundRobin(msgBytes []byte) {
 
 func (a *ApproxFork) writeToOutput(index int, msgBytes []byte) {
 	output := a.outputs[index]
-	_, err := output.Write(msgBytes)
+	err := output.WriteBytes(msgBytes)
 	if err != nil {
 		a.errMsg.Log(nil, "Error writing response to output: %v", err.Error())
-		return
-	}
-	err = output.Flush()
-	if err != nil {
-		a.errMsg.Log(nil, "Error flushing response to output: %v", err.Error())
 		return
 	}
 }
